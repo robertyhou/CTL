@@ -123,11 +123,12 @@ class AlgoStrategy(gamelib.AlgoCore):
                           [16, 6]]
         game_state.attempt_upgrade(top_wall_upgrades)
         game_state.attempt_spawn(DESTRUCTOR, new_destructor_locations)
-        game_state.attempt_spawm(DESTRUCTOR, left_destructor_locations)
+        game_state.attempt_spawn(DESTRUCTOR, left_destructor_locations)
         if game_state.get_resource(BITS) > 20:
             game_state.attempt_upgrade(destructor_locations)
             game_state.attempt_upgrade(wall_locations)
             game_state.attempt_upgrade(new_destructor_locations)
+            game_state.attempt_upgrade(left_destructor_locations)
 
 
     def build_starter_defences(self, game_state):
@@ -259,24 +260,7 @@ class AlgoStrategy(gamelib.AlgoCore):
                 elif spawn_id == 5:
                     self.enemy_scrambler_spawn_location[tuple(location)] += 1
 
-    def freq_spawn(self, dictionary):
-        arr = []
-        for key in dictionary:
-            val = dictionary[key]
-            arr.append((key, val))
-        arr.sort(key=lambda x: x[1])
-        if len(arr) == 0:
-            return -1
-        return arr[-1]
 
-    def counter_spawn(self, game_state):
-        freq_spawn_opp_location = self.freq_spawn(self.enemy_offense_spawn_locations)
-        if freq_spawn_opp_location == -1:
-            return
-        freq_spawn_opp_location = freq_spawn_opp_location[0]
-        path = game_state.find_path_to_edge(freq_spawn_opp_location)
-        for _ in range(3):
-            game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
 
     """def compute_ideal_start(self, game_state):
         # returns the least damage received location and the most damage dealt location
@@ -350,6 +334,40 @@ class AlgoStrategy(gamelib.AlgoCore):
 
         # Now just return the location that takes the least damage
         return location_options[damages.index(min(damages))]
+
+    def freq_spawn(self, dictionary):
+        arr = []
+        for key in dictionary:
+            val = dictionary[key]
+            arr.append((key, val))
+        arr.sort(key=lambda x: x[1])
+        if len(arr) == 0:
+            return -1
+        return arr[-1]
+
+    def counter_spawn(self, game_state):
+        freq_spawn_opp_location = self.freq_spawn(self.enemy_offense_spawn_locations)
+        if freq_spawn_opp_location == -1:
+            return
+        freq_spawn_opp_location = freq_spawn_opp_location[0]
+        path = game_state.find_path_to_edge(freq_spawn_opp_location)
+
+        path_length = len(path)
+        path_intercept = path[int(0.5 * path_length)]
+        path_intercept_radius = game_state.game_map.get_locations_in_range(path_intercept, 2)
+        for location in self.offense_locations:
+            defensive_path = game_state.find_path_to_edge(location)
+            overlap = False
+            for i in path_intercept_radius:
+                for j in defensive_path:
+                    if i == j:
+                        overlap = True
+                        location = i
+                        break
+            if path_intercept in path:
+                for _ in range(int(game_state.get_resource(1, 1) // 2)):
+                    game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
+
 
 if __name__ == "__main__":
     algo = AlgoStrategy()
