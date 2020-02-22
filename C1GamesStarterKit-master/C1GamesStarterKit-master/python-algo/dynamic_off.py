@@ -11,6 +11,10 @@ def compute_ideal_start(game_state):
     #place half at least damage spawn location
     #place half at most damage dealing location
     starting_locations = []
+    for i in range(14):
+        starting_locations.append([i,13-i])
+    for i in range(14):
+        starting_locations.append([14+i,i])
     game_map = game_state.game_map
     least_damage_location = least_damage_spawn_location(game_state,starting_locations)
     most_damage_location = None
