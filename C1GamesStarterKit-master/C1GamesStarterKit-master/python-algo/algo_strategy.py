@@ -90,7 +90,7 @@ class AlgoStrategy(gamelib.AlgoCore):
 
         self.counter_spawn(game_state)
         # self.dumb_offense(game_state)
-        # self.place_offensive_units(game_state)
+        self.place_offensive_units(game_state)
 
         # Now let's analyze the enemy base to see where their defenses are concentrated.
         # If they have many units in the front we can build a line for our EMPs to attack them at long range.
@@ -260,34 +260,34 @@ class AlgoStrategy(gamelib.AlgoCore):
                 elif spawn_id == 5:
                     self.enemy_scrambler_spawn_location[tuple(location)] += 1
 
-
-
-    """def compute_ideal_start(self, game_state):
+    def compute_ideal_start(self, game_state):
         # returns the least damage received location and the most damage dealt location
         # for each of the starting points
         # get the path
         # compute how much damange a given offensive unit can deal
         # place half at least damage spawn location
         # place half at most damage dealing location
-        starting_locations = []
-        for i in range(14):
-            starting_locations.append([i, 13 - i])
-        for i in range(14):
-            starting_locations.append([14 + i, i])
+
         game_map = game_state.game_map
-        least_damage_location = self.least_damage_spawn_location(game_state, starting_locations)
+        least_damage_location = self.least_damage_spawn_location(game_state)
         most_damage_location = None
         max_damage = float('-inf')
         EMP_unit = gamelib.GameUnit(EMP, game_state.config)
-        for starting_location in starting_locations:
+        for starting_location in self.offense_locations:
+            if not game_state.can_spawn(PING,starting_location):
+                continue
             path = game_state.find_path_to_edge(starting_location)
             if path is None:
+                continue
+            if len(path)==0:
+                continue
+            if len(path)<25:
                 continue
             damage = 0
             units_of_enemy_can_damage = []
             for path_location in path:
                 # assume placing EMPs right now
-                for location in game_map.get_locations_in_range(path_location, EMP_unit):
+                for location in game_map.get_locations_in_range(path_location, 4.5): #attack range of the EMP
                     if (len(game_map[location[0], location[1]]) > 0):
                         units_of_enemy_can_damage.extend(game_map[location[0], location[1]])
             damage = len(units_of_enemy_can_damage)
@@ -296,9 +296,21 @@ class AlgoStrategy(gamelib.AlgoCore):
                 most_damage_location = starting_location
         return least_damage_location, most_damage_location
 
+    def calc_allowance(self, game_state):
+        if game_state.turn_number>20:
+            return 8
+        if game_state.turn_number>10:
+            return 6
+        return (game_state.BITS //4) + 1
+
     def place_offensive_units(self, game_state):
-        allowance = game_state.BITS // 4 + 1 - 2  # placing 2 scramblers
+        allowance = self.calc_allowance(game_state)  # placing 2 scramblers
+        game_state.warn("allowance:{}".format(allowance))
+        #allowance = 4
         least_damage_received_location, most_damage_dealt_location = self.compute_ideal_start(game_state)
+        game_state.warn("most_damage_dealt_location:{}".format(most_damage_dealt_location))
+        game_state.warn("least_damage_received_location:{}".format(least_damage_received_location))
+        least_damage_loc=self.least_damage_spawn_location(game_state)
         num_ping_least_damage_received = 0
         num_emp_most_damage_dealt = 0
         if allowance >= 6:
@@ -309,31 +321,46 @@ class AlgoStrategy(gamelib.AlgoCore):
             num_emp_most_damage_dealt = 1
         else:
             num_ping_least_damage_received = allowance
+        if(not least_damage_loc is None):
+            game_state.attempt_spawn(PING, least_damage_loc, num_ping_least_damage_received)
 
-        game_state.attempt_spawn(game_state.PING, least_damage_received_location, num_ping_least_damage_received)
-        game_state.attempt_spawn(game_state.EMP, most_damage_dealt_location, num_emp_most_damage_dealt)"""
+        if num_emp_most_damage_dealt !=0:
+            #pass
+            if most_damage_dealt_location is not None:
+                game_state.attempt_spawn(EMP, most_damage_dealt_location, num_emp_most_damage_dealt)
 
-    def least_damage_spawn_location(self, game_state, location_options):
+    def least_damage_spawn_location(self, game_state):
         """
         This function will help us guess which location is the safest to spawn moving units from.
         It gets the path the unit will take then checks locations on that path to
         estimate the path's damage risk.
         """
-        damages = []
+        min_damage = float('inf')
         # Get the damage estimate each path will take
-        for location in location_options:
+        ret_loc = None
+        for location in self.offense_locations:
+            if not game_state.can_spawn(PING, location):
+                continue
+
             path = game_state.find_path_to_edge(location)
             if path is None:
+                continue
+            if len(path)==0:
+                continue
+            if len(path)<25:
                 continue
             damage = 0
             for path_location in path:
                 # Get number of enemy destructors that can attack the final location and multiply by destructor damage
                 damage += len(game_state.get_attackers(path_location, 0)) * gamelib.GameUnit(DESTRUCTOR,
                                                                                              game_state.config).damage_i
-            damages.append(damage)
+            if damage<=min_damage:
+                ret_loc = location
+                min_damage = damage
 
         # Now just return the location that takes the least damage
-        return location_options[damages.index(min(damages))]
+        return ret_loc
+
 
     def freq_spawn(self, dictionary):
         arr = []
@@ -365,7 +392,7 @@ class AlgoStrategy(gamelib.AlgoCore):
                         location = i
                         break
             if path_intercept in path:
-                for _ in range(int(game_state.get_resource(1, 1) // 2)):
+                for _ in range(int(game_state.get_resource(0, 1) // 2)):
                     game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
 
 
