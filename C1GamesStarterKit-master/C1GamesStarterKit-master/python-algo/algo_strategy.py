@@ -237,9 +237,11 @@ class AlgoStrategy(gamelib.AlgoCore):
         least_damage_location = self.least_damage_spawn_location(game_state, starting_locations)
         most_damage_location = None
         max_damage = float('-inf')
-        EMP_unit = self.GameUnit(game_state.EMP, game_state.config)
+        EMP_unit = gamelib.GameUnit(EMP, game_state.config)
         for starting_location in starting_locations:
             path = game_state.find_path_to_edge(starting_location)
+            if path is None:
+                continue
             damage = 0
             units_of_enemy_can_damage = []
             for path_location in path:
@@ -281,7 +283,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         for location in location_options:
             path = game_state.find_path_to_edge(location)
             if path is None:
-                break
+                continue
             damage = 0
             for path_location in path:
                 # Get number of enemy destructors that can attack the final location and multiply by destructor damage
