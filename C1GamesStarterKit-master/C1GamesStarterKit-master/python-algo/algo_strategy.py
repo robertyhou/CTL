@@ -5,6 +5,7 @@ import warnings
 from sys import maxsize
 import json
 import cache_moves
+from collections import defaultdict
 
 """
 Most of the algo code you write will be in this file unless you create new
@@ -44,6 +45,9 @@ class AlgoStrategy(gamelib.AlgoCore):
         CORES = 0
         # This is a good place to do initial setup
         self.scored_on_locations = []
+        self.enemy_offense_spawn_locations = defaultdict(lambda: 0)
+        self.enemy_scrambler_spawn_location = defaultdict(lambda: 0)
+
 
     def on_turn(self, turn_state):
         """
@@ -85,7 +89,8 @@ class AlgoStrategy(gamelib.AlgoCore):
                 self.build_base_scramblers(game_state)
             # self.build_reactive_defense(game_state)
 
-        self.place_offensive_units(game_state)
+        self.counter_spawn(game_state)
+        # self.place_offensive_units(game_state)
 
         # Now let's analyze the enemy base to see where their defenses are concentrated.
         # If they have many units in the front we can build a line for our EMPs to attack them at long range.
@@ -205,7 +210,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         This is the action frame of the game. This function could be called
         hundreds of times per turn and could slow the algo down so avoid putting slow code here.
         Processing the action frames is complicated so we only suggest it if you have time and experience.
-        Full doc on format of a game frame at: https://docs.c1games.com/json-docs.html
+        Full doc on format of a game frame at: `https://docs.c1games.com/json-docs.html`
         """
         # Let's record at what position we get scored on
         state = json.loads(turn_string)
@@ -221,7 +226,41 @@ class AlgoStrategy(gamelib.AlgoCore):
                 self.scored_on_locations.append(location)
                 gamelib.debug_write("All locations: {}".format(self.scored_on_locations))
 
-    def compute_ideal_start(self, game_state):
+        spawns = events["spawn"]
+        for spawn in spawns:
+            if spawn[3] == 1:
+                unit_owner_self = True
+            else:
+                unit_owner_self = False
+
+            if not unit_owner_self:
+                location = spawn[0]
+                spawn_id = spawn[1]
+                if spawn_id in [3, 4]:
+                    self.enemy_offense_spawn_locations[tuple(location)] += 1
+                elif spawn_id == 5:
+                    self.enemy_scrambler_spawn_location[tuple(location)] += 1
+
+    def freq_spawn(self, dictionary):
+        arr = []
+        for key in dictionary:
+            val = dictionary[key]
+            arr.append((key, val))
+        arr.sort(key=lambda x: x[1])
+        if len(arr) == 0:
+            return -1
+        return arr[-1]
+
+    def counter_spawn(self, game_state):
+        freq_spawn_opp_location = self.freq_spawn(self.enemy_offense_spawn_locations)
+        if freq_spawn_opp_location == -1:
+            return
+        freq_spawn_opp_location = freq_spawn_opp_location[0]
+        path = game_state.find_path_to_edge(freq_spawn_opp_location)
+        for _ in range(3):
+            game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
+
+    """def compute_ideal_start(self, game_state):
         # returns the least damage received location and the most damage dealt location
         # for each of the starting points
         # get the path
@@ -270,7 +309,7 @@ class AlgoStrategy(gamelib.AlgoCore):
             num_ping_least_damage_received = allowance
 
         game_state.attempt_spawn(game_state.PING, least_damage_received_location, num_ping_least_damage_received)
-        game_state.attempt_spawn(game_state.EMP, most_damage_dealt_location, num_emp_most_damage_dealt)
+        game_state.attempt_spawn(game_state.EMP, most_damage_dealt_location, num_emp_most_damage_dealt)"""
 
     def least_damage_spawn_location(self, game_state, location_options):
         """
