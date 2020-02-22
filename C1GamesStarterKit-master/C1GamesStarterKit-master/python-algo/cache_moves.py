@@ -1,7 +1,7 @@
 import json
 import gamelib
 #These are default dicts starting with 0
-def on_action_frame(turn_string, scored_on_locations, enemy_offense_spawn_locations, enemy_scrambler_spawn_location):
+def on_action_frame(self, turn_string):
         """
         This is the action frame of the game. This function could be called 
         hundreds of times per turn and could slow the algo down so avoid putting slow code here.
@@ -19,8 +19,8 @@ def on_action_frame(turn_string, scored_on_locations, enemy_offense_spawn_locati
             # 1 is integer for yourself, 2 is opponent (StarterKit code uses 0, 1 as player_index instead)
             if not unit_owner_self:
                 gamelib.debug_write("Got scored on at: {}".format(location))
-                scored_on_locations.append(location)
-                gamelib.debug_write("All locations: {}".format(scored_on_locations))
+                self.scored_on_locations.append(location)
+                gamelib.debug_write("All locations: {}".format(self.scored_on_locations))
 
         spawns = events["spawn"]
         for spawn in spawns:
@@ -30,6 +30,22 @@ def on_action_frame(turn_string, scored_on_locations, enemy_offense_spawn_locati
                 location = spawn[0]
                 spawn_id = spawn[1]
                 if spawn_id in [3, 4]:
-                    enemy_offense_spawn_locations[tuple(location)] += 1
+                    self.enemy_offense_spawn_locations[tuple(location)] += 1
                 elif spawn_id == 5:
-                    enemy_scrambler_spawn_location[tuple(location)] += 1
+                    self.enemy_scrambler_spawn_location[tuple(location)] += 1
+
+def freq_spawn(dictionary):
+    arr = []
+    for key in dictionary:
+        val = dictionary[key]
+        arr.append((key, val))
+    arr.sort(key=lambda x : x[1])
+    return arr[-1]
+
+def counter_spawn(algo, game_state):
+    freq_spawn_opp_location = freq_spawn(algo.enemy_offense_spawn_locations)
+    path = game_state.find_path_to_edge(freq_spawn_opp_location)
+
+    game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
+
+
