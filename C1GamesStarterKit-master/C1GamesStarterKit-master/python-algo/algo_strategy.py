@@ -47,6 +47,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         self.scored_on_locations = []
         self.enemy_offense_spawn_locations = defaultdict(lambda: 0)
         self.enemy_scrambler_spawn_location = defaultdict(lambda: 0)
+        self.offense_locations = [[4, 9], [5, 8], [6, 7], [7, 6], [21, 7], [22, 8], [23, 9]]
 
 
     def on_turn(self, turn_state):
@@ -83,13 +84,12 @@ class AlgoStrategy(gamelib.AlgoCore):
         if game_state.turn_number < 5:
             self.build_base_scramblers(game_state)
         else:
-            if self.build_self_destruct(game_state):
-                self.spawn_self_destruct(game_state)
-            else:
-                self.build_base_scramblers(game_state)
-            # self.build_reactive_defense(game_state)
+            self.build_self_destruct(game_state)
+            self.spawn_self_destruct(game_state)
+            self.upgrade(game_state)
 
         self.counter_spawn(game_state)
+        # self.dumb_offense(game_state)
         # self.place_offensive_units(game_state)
 
         # Now let's analyze the enemy base to see where their defenses are concentrated.
@@ -111,6 +111,22 @@ class AlgoStrategy(gamelib.AlgoCore):
             # encryptor_locations = [[13, 2], [14, 2], [13, 3], [14, 3]]
             # game_state.attempt_spawn(ENCRYPTOR, encryptor_locations)
         """
+    # def dumb_offense(self, game_state):
+
+    def upgrade(self, game_state):
+        destructor_locations = [[11, 5], [16, 5], [3, 11], [3, 10], [24, 11], [24, 10]]
+        new_destructor_locations = [[3, 11], [4, 10], [23, 11], [23, 10]]
+        top_wall_upgrades = [[3, 12], [4, 12], [23, 12], [24, 12]]
+        wall_locations = [[8, 6], [9, 6], [10, 5], [11, 4], [12, 5], [13, 5], [13, 4], [14, 4], [10, 6], [11, 6],
+                          [12, 6], [17, 6], [15, 4], [16, 4], [17, 5], [18, 6], [19, 7], [20, 7], [20, 6], [15, 6],
+                          [16, 6]]
+        game_state.attempt_upgrade(top_wall_upgrades)
+        game_state.attempt_spawn(DESTRUCTOR, new_destructor_locations)
+        if game_state.get_resource(BITS) > 20:
+            game_state.attempt_upgrade(destructor_locations)
+            game_state.attempt_upgrade(wall_locations)
+            game_state.attempt_upgrade(new_destructor_locations)
+
 
     def build_starter_defences(self, game_state):
         game_map = game_state.game_map
@@ -140,7 +156,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         return setup_finished
 
     def spawn_self_destruct(self, game_state):
-        bomb_locations = [[8, 5], [15, 1]]
+        bomb_locations = [[8, 5], [15, 3]]
         game_state.attempt_spawn(SCRAMBLER, bomb_locations)
 
     def build_reactive_defense(self, game_state):
