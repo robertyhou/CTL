@@ -114,14 +114,16 @@ class AlgoStrategy(gamelib.AlgoCore):
     # def dumb_offense(self, game_state):
 
     def upgrade(self, game_state):
-        destructor_locations = [[11, 5], [16, 5], [3, 11], [3, 10], [24, 11], [24, 10]]
-        new_destructor_locations = [[3, 11], [4, 10], [23, 11], [23, 10]]
-        top_wall_upgrades = [[3, 12], [4, 12], [23, 12], [24, 12]]
+        destructor_locations = [[11, 5], [16, 5], [3, 12], [3, 11], [24, 12], [24, 11]]
+        new_destructor_locations = [[3, 12], [4, 12], [23, 12], [23, 11]]
+        left_destructor_locations = [[2, 12], [25, 12], [1, 12], [26, 12], [25, 11], [2, 11]]
+        top_wall_upgrades = [[3, 13], [4, 13], [23, 13], [24, 13]]
         wall_locations = [[8, 6], [9, 6], [10, 5], [11, 4], [12, 5], [13, 5], [13, 4], [14, 4], [10, 6], [11, 6],
                           [12, 6], [17, 6], [15, 4], [16, 4], [17, 5], [18, 6], [19, 7], [20, 7], [20, 6], [15, 6],
                           [16, 6]]
         game_state.attempt_upgrade(top_wall_upgrades)
         game_state.attempt_spawn(DESTRUCTOR, new_destructor_locations)
+        game_state.attempt_spawm(DESTRUCTOR, left_destructor_locations)
         if game_state.get_resource(BITS) > 20:
             game_state.attempt_upgrade(destructor_locations)
             game_state.attempt_upgrade(wall_locations)
@@ -130,9 +132,9 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def build_starter_defences(self, game_state):
         game_map = game_state.game_map
-        destructor_locations = [[3, 11], [3, 10], [24, 11], [24, 10]]
-        wall_locations = [[0, 13], [1, 13], [2, 12], [3, 12], [4, 12], [27, 13], [26, 13], [25, 12], [24, 12], [23, 12]]
-        upgrade_locations = [[0, 13], [1, 13], [2, 12], [27, 13], [26, 13], [25, 12]]
+        destructor_locations = [[3, 12], [3, 11], [24, 12], [24, 11]]
+        wall_locations = [[0, 13], [1, 13], [2, 13], [3, 13], [4, 13], [27, 13], [26, 13], [25, 13], [24, 13], [23, 13]]
+        upgrade_locations = [[0, 13], [1, 13], [2, 13], [27, 13], [26, 13], [25, 13]]
 
         # Useful tool for setting up your base locations: https://www.kevinbai.design/terminal-map-maker
         # More community tools available at: https://terminal.c1games.com/rules#Download
