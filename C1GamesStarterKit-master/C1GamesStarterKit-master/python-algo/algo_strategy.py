@@ -322,6 +322,14 @@ class AlgoStrategy(gamelib.AlgoCore):
         return (game_state.BITS //4) + 1
 
     def place_offensive_units(self, game_state):
+        if game_state.turn_number>30 and game_state.enemy_health >25:
+            if game_state.BITS <15:
+                return
+            else:
+                least_damage_received_location, most_damage_dealt_location = self.compute_ideal_start(game_state)
+                if most_damage_dealt_location is not None:
+                    game_state.attempt_spawn(EMP, most_damage_dealt_location, 5)
+
         allowance = self.calc_allowance(game_state)  # placing 2 scramblers
         game_state.warn("allowance:{}".format(allowance))
         #allowance = 4
