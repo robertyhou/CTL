@@ -298,10 +298,22 @@ class AlgoStrategy(gamelib.AlgoCore):
     def place_encryptors(self,game_state):
         if game_state.CORES <40:
             return
+        destroyer_coords = [[7,9],[20,9]]
+        for coord in destroyer_coords:
+            if game_state.can_spawn(DESTRUCTOR, coord):
+                game_state.attempt_spawn(DESTRUCTOR, coord, 1)
+        wall_coords = [[7,10],[8,10],[19,10],[20,10]]
+
+        for coord in wall_coords:
+            if game_state.can_spawn(FILTER, coord):
+                game_state.attempt_spawn(FILTER, coord, 1)
+
         coords = [[8,7],[9,8],[10,9],[11,10],[20,8],[19,9],[18,10],[17,11]]
         for coord in coords:
             if game_state.can_spawn(ENCRYPTOR, coord):
                 game_state.attempt_spawn(ENCRYPTOR, coord, 1)
+
+
     def calc_allowance(self, game_state):
         if game_state.turn_number>20:
             return 8
