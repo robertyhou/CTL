@@ -27,6 +27,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         seed = random.randrange(maxsize)
         random.seed(seed)
         gamelib.debug_write('Random seed: {}'.format(seed))
+        self.addition_EMP = 0
 
     def on_game_start(self, config):
         """
@@ -323,12 +324,14 @@ class AlgoStrategy(gamelib.AlgoCore):
 
     def place_offensive_units(self, game_state):
         if game_state.turn_number>30 and game_state.enemy_health >25:
-            if game_state.BITS <15:
+            self.addition_EMP = 0
+            if game_state.BITS <(15 + self.addition_EMP * 3):
                 return
             else:
                 least_damage_received_location, most_damage_dealt_location = self.compute_ideal_start(game_state)
                 if most_damage_dealt_location is not None:
-                    game_state.attempt_spawn(EMP, most_damage_dealt_location, 5)
+                    game_state.attempt_spawn(EMP, most_damage_dealt_location, 5+self.addition_EMP)
+                    self.addition_EMP+=1
 
         allowance = self.calc_allowance(game_state)  # placing 2 scramblers
         game_state.warn("allowance:{}".format(allowance))
