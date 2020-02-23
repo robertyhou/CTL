@@ -91,7 +91,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         self.counter_spawn(game_state)
         # self.dumb_offense(game_state)
         self.place_offensive_units(game_state)
-
+        self.place_encryptors(game_state)
         # Now let's analyze the enemy base to see where their defenses are concentrated.
         # If they have many units in the front we can build a line for our EMPs to attack them at long range.
         """if self.detect_enemy_unit(game_state, unit_type=None, valid_x=None, valid_y=[14, 15]) > 10:
@@ -295,7 +295,13 @@ class AlgoStrategy(gamelib.AlgoCore):
                 max_damage = damage
                 most_damage_location = starting_location
         return least_damage_location, most_damage_location
-
+    def place_encryptors(self,game_state):
+        if game_state.CORES <40:
+            return
+        coords = [[8,7],[9,8],[10,9],[11,10],[20,8],[19,9],[18,10],[17,11]]
+        for coord in coords:
+            if game_state.can_spawn(ENCRYPTOR, coord):
+                game_state.attempt_spawn(ENCRYPTOR, coord, 1)
     def calc_allowance(self, game_state):
         if game_state.turn_number>20:
             return 8
