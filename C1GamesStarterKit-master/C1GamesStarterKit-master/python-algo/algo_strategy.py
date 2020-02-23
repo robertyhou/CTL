@@ -82,7 +82,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         # First, place basic defenses
         self.build_starter_defences(game_state)
 
-        if game_state.turn_number < 5:
+        if game_state.turn_number < 3:
             self.build_base_scramblers(game_state)
         else:
             self.build_self_destruct(game_state)
@@ -323,15 +323,13 @@ class AlgoStrategy(gamelib.AlgoCore):
         return (game_state.BITS //4) + 1
 
     def place_offensive_units(self, game_state):
-        if game_state.turn_number>30 and game_state.enemy_health >25:
+        if game_state.turn_number>20 and game_state.enemy_health >25:
             self.addition_EMP = 0
             if game_state.BITS <(15 + self.addition_EMP * 3):
                 return
             else:
-                least_damage_received_location, most_damage_dealt_location = self.compute_ideal_start(game_state)
-                if most_damage_dealt_location is not None:
-                    game_state.attempt_spawn(EMP, most_damage_dealt_location, 5+self.addition_EMP)
-                    self.addition_EMP+=1
+                game_state.attempt_spawn(EMP, [6,7], 5+self.addition_EMP)
+                self.addition_EMP+=1
 
         allowance = self.calc_allowance(game_state)  # placing 2 scramblers
         game_state.warn("allowance:{}".format(allowance))
@@ -421,9 +419,9 @@ class AlgoStrategy(gamelib.AlgoCore):
                         location = i
                         break
             if path_intercept in path:
-                to_send = max(5, int(game_state.get_resource(1, 1) // 2))
-                for _ in range(to_send):
-                    game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
+                to_send = min(5, int(game_state.get_resource(1, 1) // 4))
+                for i in range(to_send):
+                    game_state.attempt_spawn(SCRAMBLER, location)
 
 
 if __name__ == "__main__":
