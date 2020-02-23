@@ -159,7 +159,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         return setup_finished
 
     def spawn_self_destruct(self, game_state):
-        bomb_locations = [[8, 5], [15, 3]]
+        bomb_locations = [[8, 5], [16, 2]]
         game_state.attempt_spawn(SCRAMBLER, bomb_locations)
 
     def build_reactive_defense(self, game_state):
@@ -392,7 +392,8 @@ class AlgoStrategy(gamelib.AlgoCore):
                         location = i
                         break
             if path_intercept in path:
-                for _ in range(int(game_state.get_resource(0, 1) // 2)):
+                to_send = max(5, int(game_state.get_resource(1, 1) // 2))
+                for _ in range(to_send):
                     game_state.attempt_spawn(SCRAMBLER, path[-1], num=1)
 
 
